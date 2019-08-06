@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# Add .ecli to YAML file associations to get syntax highlighting, or just use a yaml file with
+# the shebang line
+"": | # This hackery is for compatibility with a variety of shebang lines while also keeping the yaml valid
+  true;
+  exec cargo run -- $0
+styles:
+  default:
+    alignment: left
+    fg: blue
+    bg: none
+  selected:
+    alignment: left
+    fg: red
+    bg: none
+menus:
+  main:
+    title: Some title
+    entries:
+      - text: Bash Shell
+        command: bash
+      - text: Fish Shell
+        script: fish
+      - text: Echo
+        none:
+      - text: Other menu
+        goto: other
+      - text: Exit
+        return:
+  other:
+    title: Other
+    entries:
+      - text: Build ecli
+        command: cargo
+        args: [build]
+      - text: Go back
+        return:
