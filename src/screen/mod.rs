@@ -51,7 +51,6 @@ pub fn enter(config: AppConfig) -> Result<()> {
         state.stack.last_mut().unwrap().render(&mut renderer)?;
     }
 
-    renderer.clear()?;
-    renderer.flush()?;
+    renderer.halt()?;
     Ok(())
 }

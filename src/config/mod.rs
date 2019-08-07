@@ -18,6 +18,37 @@ pub struct AppConfig {
     pub menus: BTreeMap<String, Menu>,
 }
 
+impl Default for AppConfig {
+    fn default() -> Self {
+        let mut menus = BTreeMap::new();
+        menus.insert(
+            "main".into(),
+            Menu {
+                title: "Default Menu".into(),
+                entries: vec![Entry {
+                    text: "Exit".into(),
+                    action: Action::Return { r#return: () },
+                }],
+            },
+        );
+        AppConfig {
+            styles: StyleConfig {
+                default: Style {
+                    alignment: Alignment::Left,
+                    fg: Color::Red,
+                    bg: Color::None,
+                },
+                selected: Style {
+                    alignment: Alignment::Left,
+                    fg: Color::Green,
+                    bg: Color::None,
+                },
+            },
+            menus,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Menu {

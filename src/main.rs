@@ -1,19 +1,26 @@
+#[macro_use]
+extern crate clap;
+
 mod error;
 
 pub use error::{AppError, Result};
 
+mod args;
+mod commands;
 mod config;
 mod screen;
 
+pub use args::Command;
+
 fn main() -> Result<()> {
-    use std::env::args;
-    let args: Vec<String> = args().collect();
-    if args.len() < 2 {
-        println!("Expected target file!")
-    } else {
-        let path = std::path::PathBuf::from(args.last().unwrap_or(&String::default()).to_owned());
-        let menu = config::AppConfig::load_file(path)?;
-        screen::enter(menu)?;
+    match args::get_args() {
+        Command::Open { file } => {
+            let menu = config::AppConfig::load_file(file)?;
+            screen::enter(menu)?;
+        }
+        Command::Generate { file } => {
+            commands::generate(file)?;
+        }
     }
     Ok(())
 }
