@@ -12,7 +12,6 @@ use {
         process::{Command, Stdio},
     },
     termion::{
-        cursor::Goto,
         event::Key,
         input::TermRead,
         raw::{IntoRawMode, RawTerminal},
@@ -22,18 +21,19 @@ use {
 
 pub struct State {
     pub config: AppConfig,
-    pub stack: Vec<Screen>,
+    pub stack: Vec<ScreenObj>,
 }
 
 pub fn enter(config: AppConfig) -> Result<()> {
     let stdin = stdin();
     let mut renderer = Renderer::new(&config)?;
-    let screen = Screen::new(config.menus["main"].clone())?;
+    let screen = exec::get_screen(config.menus["main"].clone())?;
     let mut state = State {
         config,
         stack: vec![screen],
     };
     state.stack[0].render(&mut renderer)?;
+    renderer.flush()?;
 
     for c in stdin.keys() {
         let key = c?;
@@ -47,8 +47,10 @@ pub fn enter(config: AppConfig) -> Result<()> {
         if state.stack.is_empty() {
             break;
         }
-        write!(renderer.term, "{}", termion::clear::All)?;
+        renderer.clear()?;
         state.stack.last_mut().unwrap().render(&mut renderer)?;
+        draw!(renderer @loc: (renderer.size.0, renderer.size.1) <<); //reset cursor...
+        renderer.flush()?;
     }
 
     renderer.halt()?;

@@ -33,8 +33,7 @@ pub fn get_args() -> Command {
                         .index(1)
                         .help("filename to create")
                         .required(true),
-                )
-                .alias("gen"),
+                ),
         )
         .get_matches();
 

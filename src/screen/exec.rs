@@ -29,7 +29,7 @@ pub fn exec(renderer: &mut Renderer, action: &Action, state: &mut State) -> Resu
             renderer.resume()?;
         }
         Action::Goto { goto } => {
-            let new = Screen::new(state.config.menus[goto].clone())?;
+            let new = get_screen(state.config.menus[goto].clone())?;
             state.stack.push(new);
         }
         Action::Return { .. } => {
@@ -38,4 +38,11 @@ pub fn exec(renderer: &mut Renderer, action: &Action, state: &mut State) -> Resu
         Action::None { .. } => {}
     };
     Ok(())
+}
+
+pub fn get_screen(menu: Menu) -> Result<ScreenObj> {
+    match menu {
+        Menu::Choice(m) => ChoiceScreen::new(m),
+        Menu::Prompt(m) => PromptScreen::new(m),
+    }
 }

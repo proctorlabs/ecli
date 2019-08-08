@@ -31,7 +31,10 @@ menus:
     title: Other
     entries:
       - text: Build ecli
-        command: cargo
-        args: [build]
+        goto: test
       - text: Go back
         return:
+  test:
+    prompt: Hello
+    set: val
+    then: Other

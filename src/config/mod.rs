@@ -11,6 +11,23 @@ pub struct StyleConfig {
     pub selected: Style,
 }
 
+impl Default for StyleConfig {
+    fn default() -> Self {
+        StyleConfig {
+            default: Style {
+                alignment: Alignment::Left,
+                fg: Color::Red,
+                bg: Color::None,
+            },
+            selected: Style {
+                alignment: Alignment::Left,
+                fg: Color::Green,
+                bg: Color::None,
+            },
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct AppConfig {
@@ -23,27 +40,16 @@ impl Default for AppConfig {
         let mut menus = BTreeMap::new();
         menus.insert(
             "main".into(),
-            Menu {
+            Menu::Choice(ChoiceMenu {
                 title: "Default Menu".into(),
                 entries: vec![Entry {
                     text: "Exit".into(),
                     action: Action::Return { r#return: () },
                 }],
-            },
+            }),
         );
         AppConfig {
-            styles: StyleConfig {
-                default: Style {
-                    alignment: Alignment::Left,
-                    fg: Color::Red,
-                    bg: Color::None,
-                },
-                selected: Style {
-                    alignment: Alignment::Left,
-                    fg: Color::Green,
-                    bg: Color::None,
-                },
-            },
+            styles: Default::default(),
             menus,
         }
     }
@@ -51,9 +57,25 @@ impl Default for AppConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct Menu {
+#[serde(untagged)]
+pub enum Menu {
+    Choice(ChoiceMenu),
+    Prompt(PromptMenu),
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub struct ChoiceMenu {
     pub title: String,
     pub entries: Vec<Entry>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub struct PromptMenu {
+    pub prompt: String,
+    pub set: String,
+    pub then: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

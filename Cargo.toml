@@ -1,8 +1,14 @@
 [package]
 name = "ecli"
+description = "Dynamic interactive CLI menus"
+repository = "https://github.com/proctorlabs/ecli"
 version = "0.1.0"
 authors = ["Phil Proctor <philliptproctor@gmail.com>"]
 edition = "2018"
+keywords = ["cli", "menu"]
+categories = ["command-line-interface", "command-line-utilities", "development-tools"]
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 termion = "1.5"

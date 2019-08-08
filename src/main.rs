@@ -2,6 +2,8 @@
 extern crate clap;
 
 mod error;
+#[macro_use]
+mod macros;
 
 pub use error::{AppError, Result};
 
