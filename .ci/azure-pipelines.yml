@@ -22,7 +22,7 @@ steps:
       gzip -9 -kf target/x86_64-unknown-linux-musl/release/ecli
     displayName: 'Build package'
 
-  - task: GithubRelease@0
+  - task: GitHubRelease@0
     displayName: 'Create GitHub Release'
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
     inputs:
