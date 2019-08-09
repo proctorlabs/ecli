@@ -28,4 +28,4 @@ steps:
     inputs:
       gitHubConnection: proctorlabsToken
       repositoryName: proctorlabs/ecli           
-      assets: $(Build.ArtifactStagingDirectory)/target/x86_64-unknown-linux-musl/release/ecli.gz
+      assets: $(Agent.BuildDirectory)/target/x86_64-unknown-linux-musl/release/ecli.gz
