@@ -19,15 +19,15 @@ pool:
 container: rust:1.36-buster
 
 steps:
-  - displayName: 'Build package'
-    script: |
+  - script: |
       rustup target add x86_64-unknown-linux-musl
       cargo build --release --target x86_64-unknown-linux-musl
       strip target/x86_64-unknown-linux-musl/release/ecli
       gzip -9 -kf target/x86_64-unknown-linux-musl/release/ecli
+    displayName: 'Build package'
 
-  - displayName: 'Create GitHub Release'   
-    task: GithubRelease@0
+  - task: GithubRelease@0
+    displayName: 'Create GitHub Release'
     condition: is_tag
     inputs:
       gitHubConnection: proctorlabs
