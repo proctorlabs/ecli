@@ -9,10 +9,6 @@ strategy:
     stable:
       rustup_toolchain: stable
 
-variables:
-  build_name: "$(Build.SourceBranchName)"
-  is_tag: "${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}"
-
 pool:
   vmImage: "ubuntu-16.04"
 
@@ -28,7 +24,7 @@ steps:
 
   - task: GithubRelease@0
     displayName: 'Create GitHub Release'
-    condition: is_tag
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
     inputs:
       gitHubConnection: proctorlabs-release
       repositoryName: proctorlabs/ecli           
