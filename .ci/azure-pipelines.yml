@@ -30,6 +30,6 @@ steps:
     displayName: 'Create GitHub Release'
     condition: is_tag
     inputs:
-      gitHubConnection: proctorlabs
+      gitHubConnection: proctorlabs-release
       repositoryName: proctorlabs/ecli           
       assets: $(Build.ArtifactStagingDirectory)/target/x86_64-unknown-linux-musl/release/ecli.gz
