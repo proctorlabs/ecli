@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+"": | # sh compat shim
+  true;
+  ecli $0
