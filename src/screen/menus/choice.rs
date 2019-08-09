@@ -13,7 +13,7 @@ impl ChoiceScreen {
 }
 
 impl Screen for ChoiceScreen {
-    fn input(&mut self, key: Key) -> Result<Option<Action>> {
+    fn input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
         match key {
             Key::Up => {
                 if self.selected > 0 {
@@ -26,7 +26,7 @@ impl Screen for ChoiceScreen {
                 }
             }
             Key::Char('\n') => {
-                return Ok(Some(self.menu.entries[self.selected].action.clone()));
+                return Ok(Some(vec![self.menu.entries[self.selected].action.clone()]));
             }
             _ => {}
         };

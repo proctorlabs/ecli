@@ -42,7 +42,9 @@ pub fn enter(config: AppConfig) -> Result<()> {
         }
         let action = state.stack.last_mut().unwrap().input(key)?;
         if let Some(action) = action {
-            exec(&mut renderer, &action, &mut state)?;
+            for a in action.iter() {
+                exec(&mut renderer, a, &mut state)?;
+            }
         }
         if state.stack.is_empty() {
             break;

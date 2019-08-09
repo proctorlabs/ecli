@@ -16,12 +16,13 @@ impl PromptScreen {
 }
 
 impl Screen for PromptScreen {
-    fn input(&mut self, key: Key) -> Result<Option<Action>> {
+    fn input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
         match key {
             Key::Char('\n') => {
-                return Ok(Some(Action::Goto {
-                    goto: "main".into(),
-                }))
+                return Ok(Some(vec![
+                    Action::Return { r#return: () },
+                    self.menu.then.clone(),
+                ]))
             }
             Key::Char(c) => self.input = format!("{}{}", self.input, c),
             _ => {}
@@ -30,8 +31,8 @@ impl Screen for PromptScreen {
     }
 
     fn render(&mut self, renderer: &mut Renderer) -> Result<()> {
-        draw!(renderer @style: default @loc: (4, renderer.size.1 - 2) -> "{}", self.menu.prompt);
-        draw!(renderer @style: default @loc: (4, renderer.size.1 - 1) -> "{}", self.input);
+        draw!(renderer @style: default @loc: (4, 1) -> "{}", self.menu.prompt);
+        draw!(renderer @style: default @loc: (4, 2) -> "➜ {}", self.input);
         Ok(())
     }
 }

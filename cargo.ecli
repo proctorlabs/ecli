@@ -37,4 +37,5 @@ menus:
   test:
     prompt: Hello
     set: val
-    then: Other
+    then:
+      goto: other

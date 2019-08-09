@@ -75,7 +75,7 @@ pub struct ChoiceMenu {
 pub struct PromptMenu {
     pub prompt: String,
     pub set: String,
-    pub then: String,
+    pub then: Action,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

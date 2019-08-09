@@ -61,6 +61,7 @@ impl Renderer {
     pub fn halt(&mut self) -> Result<()> {
         self.clear()?;
         self.flush()?;
+        draw!(self -> "{}", termion::cursor::Show);
         self.term.suspend_raw_mode()?;
         Ok(())
     }
