@@ -11,7 +11,7 @@ strategy:
 
 variables:
   build_name: "$(Build.SourceBranchName)"
-  is_tag: "${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}"
+  is_tag: "${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}"
 
 pool:
   vmImage: "ubuntu-16.04"
@@ -19,8 +19,17 @@ pool:
 container: rust:1.36-buster
 
 steps:
-  - script: |
+  - displayName: 'Build package'
+    script: |
       rustup target add x86_64-unknown-linux-musl
       cargo build --release --target x86_64-unknown-linux-musl
       strip target/x86_64-unknown-linux-musl/release/ecli
       gzip -9 -kf target/x86_64-unknown-linux-musl/release/ecli
+
+  - displayName: 'Create GitHub Release'   
+    task: GithubRelease@0
+    condition: is_tag
+    inputs:
+      gitHubConnection: proctorlabs
+      repositoryName: proctorlabs/ecli           
+      assets: $(Build.ArtifactStagingDirectory)/target/x86_64-unknown-linux-musl/release/ecli.gz
