@@ -22,10 +22,23 @@ steps:
       gzip -9 -kf target/x86_64-unknown-linux-musl/release/ecli
     displayName: 'Build package'
 
+  - task: CopyFiles@2
+    displayName: Copy files
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)/target/x86_64-unknown-linux-musl/release' 
+      contents: ecli
+      targetFolder: '$(Build.BinariesDirectory)/x86_64-unknown-linux-musl'
+  - task: ArchiveFiles@2
+    displayName: Gather assets
+    inputs:
+      rootFolderOrFile: '$(Build.BinariesDirectory)/x86_64-unknown-linux-musl'
+      archiveType: tar
+      tarCompression: gz
+      archiveFile: '$(Build.ArtifactStagingDirectory)/ecli.tar.gz'
   - task: GitHubRelease@0
     displayName: 'Create GitHub Release'
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
     inputs:
       gitHubConnection: proctorlabsToken
       repositoryName: proctorlabs/ecli           
-      assets: $(Agent.BuildDirectory)/target/x86_64-unknown-linux-musl/release/ecli.gz
+      assets: $(Build.ArtifactStagingDirectory)/ecli.tar.gz
