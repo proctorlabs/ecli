@@ -26,6 +26,6 @@ steps:
     displayName: 'Create GitHub Release'
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
     inputs:
-      gitHubConnection: proctorlabs-release
+      gitHubConnection: proctorlabsToken
       repositoryName: proctorlabs/ecli           
       assets: $(Build.ArtifactStagingDirectory)/target/x86_64-unknown-linux-musl/release/ecli.gz
