@@ -1,7 +1,7 @@
 resources:
   containers:
   - container: rust-builder
-    image: rust:1.36-buster
+    image: rust:1.36-slim-buster
 
 trigger:
   branches:
