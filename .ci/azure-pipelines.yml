@@ -1,0 +1,26 @@
+trigger:
+  branches:
+    include: ["*"]
+  tags:
+    include: ["*"]
+
+strategy:
+  matrix:
+    stable:
+      rustup_toolchain: stable
+
+variables:
+  build_name: "$(Build.SourceBranchName)"
+  is_tag: "${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}"
+
+pool:
+  vmImage: "ubuntu-16.04"
+
+container: rust:1.36-buster
+
+steps:
+  - script: |
+      rustup target add x86_64-unknown-linux-musl
+      cargo build --release --target x86_64-unknown-linux-musl
+      strip target/x86_64-unknown-linux-musl/release/ecli
+      gzip -9 -kf target/x86_64-unknown-linux-musl/release/ecli
