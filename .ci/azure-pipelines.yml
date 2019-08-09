@@ -1,47 +1,59 @@
+resources:
+  containers:
+  - container: rust-builder
+    image: rust:1.36-buster
+
 trigger:
   branches:
     include: ["*"]
   tags:
     include: ["*"]
 
-strategy:
-  matrix:
-    stable:
-      rustup_toolchain: stable
+jobs:
+- job: Build ecli
 
-pool:
-  vmImage: "ubuntu-16.04"
+  strategy:
+    matrix:
+      standard:
+        containerResource: rust-builder
 
-container: rust:1.36-buster
+  pool:
+    vmImage: "ubuntu-16.04"
+  container: $[ variables['containerResource'] ]
 
-steps:
-  - script: |
-      rustup target add x86_64-unknown-linux-musl
-      cargo build --release --target x86_64-unknown-linux-musl
-    displayName: 'Build package'
+  steps:
+    - script: |
+        rustup target add x86_64-unknown-linux-musl
+        cargo build --release --target x86_64-unknown-linux-musl
+        strip target/x86_64-unknown-linux-musl/release/ecli
+      displayName: 'Build package'
 
-  - task: CopyFiles@2
-    displayName: Copy files for release
-    inputs:
-      sourceFolder: '$(Build.SourcesDirectory)/target/x86_64-unknown-linux-musl/release' 
-      contents: ecli
-      targetFolder: '$(Build.BinariesDirectory)/x86_64-unknown-linux-musl'
-  - task: ArchiveFiles@2
-    displayName: Gather build assets
-    inputs:
-      rootFolderOrFile: '$(Build.BinariesDirectory)/x86_64-unknown-linux-musl'
-      archiveType: tar
-      tarCompression: gz
-      archiveFile: '$(Build.ArtifactStagingDirectory)/ecli.tar.gz'
-  - task: PublishBuildArtifacts@1
-    inputs:
-      artifactName: $(containerResource)
-    displayName: 'Upload artifacts'
-  # - task: GitHubRelease@0
-  #   displayName: 'Create GitHub Release'
-  #   condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
-  #   inputs:
-  #     gitHubConnection: proctorlabsToken
-  #     repositoryName: proctorlabs/ecli           
-  #     assets: $(Build.ArtifactStagingDirectory)/ecli.tar.gz
-  #     isPreRelease: true
+    - task: CopyFiles@2
+      displayName: Copy files for release
+      inputs:
+        sourceFolder: '$(Build.SourcesDirectory)/target/x86_64-unknown-linux-musl/release' 
+        contents: ecli
+        targetFolder: '$(Build.BinariesDirectory)/'
+
+    - task: ArchiveFiles@2
+      displayName: Gather build assets
+      inputs:
+        rootFolderOrFile: '$(Build.BinariesDirectory)/ecli'
+        includeRootFolder: false
+        archiveType: tar
+        tarCompression: gz
+        archiveFile: '$(Build.ArtifactStagingDirectory)/ecli.tar.gz'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        artifactName: ecli.tar.gz
+      displayName: 'Upload artifacts'
+
+    # - task: GitHubRelease@0
+    #   displayName: 'Create GitHub Release'
+    #   condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/v')
+    #   inputs:
+    #     gitHubConnection: proctorlabsToken
+    #     repositoryName: proctorlabs/ecli           
+    #     assets: $(Build.ArtifactStagingDirectory)/ecli.tar.gz
+    #     isPreRelease: true
