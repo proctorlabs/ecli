@@ -1,7 +1,7 @@
 resources:
   containers:
-  - container: rust-builder
-    image: rust:1.36-buster
+    - container: rust-builder
+      image: rust:1.36-buster
 
 trigger:
   branches:
@@ -10,24 +10,24 @@ trigger:
     include: ["*"]
 
 jobs:
-- job: build
+  - job: build
 
-  pool:
-    vmImage: "ubuntu-16.04"
-  container: rust-builder
+    pool:
+      vmImage: "ubuntu-16.04"
+    container: rust-builder
 
-  steps:
-    - script: ./.ci/build.sh
-      displayName: 'Build package'
+    steps:
+      - script: ./.ci/build.sh
+        displayName: "Build package"
 
-    - task: CopyFiles@2
-      displayName: Copy release package
-      inputs:
-        sourceFolder: '$(Build.SourcesDirectory)/target/x86_64-unknown-linux-musl/release' 
-        contents: ecli.tar.gz
-        targetFolder: '$(Build.ArtifactStagingDirectory)/'
+      - task: CopyFiles@2
+        displayName: Copy release package
+        inputs:
+          sourceFolder: "$(Build.SourcesDirectory)/target/x86_64-unknown-linux-musl/release"
+          contents: ecli.tar.xz
+          targetFolder: "$(Build.ArtifactStagingDirectory)/"
 
-    - task: PublishBuildArtifacts@1
-      inputs:
-        artifactName: ecli.tar.gz
-      displayName: 'Upload artifacts'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          artifactName: ecli.tar.xz
+        displayName: "Upload artifacts"
