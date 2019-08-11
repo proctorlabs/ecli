@@ -9,6 +9,10 @@ trigger:
   tags:
     include: ["*"]
 
+variables:
+  RELEASE_TAG: "$(Build.SourceBranchName)"
+  IS_TAG: "${{ startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}"
+
 jobs:
   - job: build
 
@@ -17,5 +21,8 @@ jobs:
     container: rust-builder
 
     steps:
-      - script: "GITHUB_TOKEN=$(variables['is_tag']) ./.ci/build.sh -bag"
+      - script: "./.ci/build.sh -ba"
         displayName: "Build package"
+      - script: "./.ci/build.sh -g"
+        displayName: "Push release to github"
+        condition: eq( variables['IS_TAG'], 'True' )

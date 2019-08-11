@@ -17,12 +17,10 @@ build() {
 }
 
 github_publish() {
-    RELEASE_TAG="${RELEASE_TAG:-}"
-    if ! [ -z "$RELEASE_TAG" ]; then
-        GITHUB_TOKEN="$GITHUB_TOKEN"
-        curl -L "https://github.com/github/hub/releases/download/v${HUB_VERSION}/hub-linux-amd64-${HUB_VERSION}.tgz" | tar xvz --strip=2 --wildcards *bin/hub
-        ./hub release create -p -m "Automated Prerelease" -a "$PACKAGE_FILE" "$RELEASE_TAG"
-    fi
+    RELEASE_TAG="${RELEASE_TAG}"
+    GITHUB_TOKEN="$GITHUB_TOKEN"
+    curl -L "https://github.com/github/hub/releases/download/v${HUB_VERSION}/hub-linux-amd64-${HUB_VERSION}.tgz" | tar xvz --strip=2 --wildcards *bin/hub
+    ./hub release create -p -m "Automated Prerelease" -a "$PACKAGE_FILE" "$RELEASE_TAG"
 }
 
 create_archive() {
