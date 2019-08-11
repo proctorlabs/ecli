@@ -2,8 +2,12 @@
 # Add .ecli to YAML file associations to get syntax highlighting, or just use a yaml file with
 # the shebang line
 "": |
-  true;
-  exec cargo run -- $0
+  command -v ecli >/dev/null 2>&1 ||
+  {
+    read -p 'ecli not installed. Install automatically? [y/N]:' ANS
+    if [[ $ANS != y* ]] ; then { exit 1 ; } fi ; curl -s 'https://raw.githubusercontent.com/proctorlabs/ecli/master/assets/install.sh' | sh
+  }
+  exec ecli $0 $@
 styles:
   default:
     alignment: left
