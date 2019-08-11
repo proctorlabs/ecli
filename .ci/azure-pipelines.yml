@@ -26,3 +26,5 @@ jobs:
       - script: "./.ci/build.sh -g"
         displayName: "Push release to github"
         condition: eq( variables['IS_TAG'], 'True' )
+        env:
+          GITHUB_TOKEN: $(GITHUB_TOKEN)
