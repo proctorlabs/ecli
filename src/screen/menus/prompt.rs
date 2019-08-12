@@ -19,10 +19,9 @@ impl Screen for PromptScreen {
     fn process_input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
         match key {
             Key::Char('\n') => {
-                return Ok(Some(vec![
-                    Action::Return { r#return: () },
-                    self.menu.then.clone(),
-                ]))
+                let mut v = vec![Action::Return { r#return: () }];
+                v.append(&mut self.menu.then.clone());
+                return Ok(Some(v));
             }
             Key::Char(c) => self.input = format!("{}{}", self.input, c),
             _ => {}

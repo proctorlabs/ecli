@@ -5,9 +5,11 @@ mod renderer;
 use {
     crate::{config::*, *},
     exec::*,
+    handlebars::Handlebars,
     menus::*,
     renderer::*,
     std::{
+        collections::HashMap,
         io::{stdin, stdout, Read, Stdout, Write},
         process::{Command, Stdio},
     },
@@ -22,6 +24,8 @@ use {
 pub struct State {
     pub config: AppConfig,
     pub stack: Vec<ScreenObj>,
+    pub template: Handlebars,
+    pub vars: HashMap<String, String>,
 }
 
 pub fn enter(config: AppConfig) -> Result<()> {
@@ -31,6 +35,8 @@ pub fn enter(config: AppConfig) -> Result<()> {
     let mut state = State {
         config,
         stack: vec![screen_obj],
+        template: Handlebars::new(),
+        vars: HashMap::new(),
     };
 
     let mut keys = stdin().keys();
@@ -41,7 +47,9 @@ pub fn enter(config: AppConfig) -> Result<()> {
         if Key::Ctrl('c') == key {
             break;
         }
+
         let action = state.stack.last_mut().unwrap().process_input(key)?;
+
         if let Some(action) = action {
             for a in action.iter() {
                 exec(&mut renderer, a, &mut state)?;

@@ -44,7 +44,7 @@ impl Default for AppConfig {
                 title: "Default Menu".into(),
                 entries: vec![Entry {
                     text: "Exit".into(),
-                    action: Action::Return { r#return: () },
+                    actions: vec![Action::Return { r#return: () }],
                 }],
             }),
         );
@@ -75,15 +75,14 @@ pub struct ChoiceMenu {
 pub struct PromptMenu {
     pub prompt: String,
     pub set: String,
-    pub then: Action,
+    pub then: Vec<Action>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Entry {
     pub text: String,
-    #[serde(flatten)]
-    pub action: Action,
+    pub actions: Vec<Action>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -105,9 +104,6 @@ pub enum Action {
     },
     Return {
         r#return: (),
-    },
-    None {
-        none: (),
     },
 }
 

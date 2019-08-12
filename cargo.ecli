@@ -21,24 +21,35 @@ menus:
     title: Some title
     entries:
       - text: Bash Shell
-        command: bash
+        actions:
+          - command: bash
       - text: Fish Shell
-        script: fish
-      - text: Echo
-        none:
+        actions:
+          - script: fish
+      - text: Echo then exit
+        actions:
+          - command: echo
+            args:
+              - "Hello!"
+          - return: ~
       - text: Other menu
-        goto: other
+        actions:
+          - goto: other
       - text: Exit
-        return:
+        actions:
+          - return: ~
   other:
     title: Other
     entries:
       - text: Build ecli
-        goto: test
+        actions:
+          - goto: test
       - text: Go back
-        return:
+        actions:
+          - return: ~
   test:
     prompt: Hello
     set: val
     then:
-      goto: other
+      - return: ~
+      - goto: other
