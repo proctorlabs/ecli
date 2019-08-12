@@ -13,7 +13,7 @@ impl ChoiceScreen {
 }
 
 impl Screen for ChoiceScreen {
-    fn input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
+    fn process_input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
         match key {
             Key::Up => {
                 if self.selected > 0 {
@@ -33,7 +33,13 @@ impl Screen for ChoiceScreen {
         Ok(None)
     }
 
+    fn init(&mut self, r: &mut Renderer) -> Result<()> {
+        r.set_render_mode(RenderMode::Raw)?;
+        Ok(())
+    }
+
     fn render(&mut self, renderer: &mut Renderer) -> Result<()> {
+        renderer.set_render_mode(RenderMode::Raw)?;
         renderer.border()?;
         draw!(renderer @bold
             @style: default

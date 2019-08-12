@@ -1,7 +1,8 @@
 #[macro_export]
 macro_rules! draw {
     ($r:ident @loc: $loc:ident $($tail:tt)*) => {
-        draw!($r @loc: ($loc.0, $loc.1) $($tail)*)
+        draw!($r @loc: ($loc.0, $loc.1))
+        draw!($r $($tail)*);
     };
     ($r:ident @loc: ( $($loc:tt)* ) $($tail:tt)*) => {
         draw!($r -> "{}", termion::cursor::Goto($($loc)*));

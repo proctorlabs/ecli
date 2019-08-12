@@ -5,7 +5,8 @@ use super::*;
 pub use {choice::*, prompt::*};
 
 pub trait Screen {
-    fn input(&mut self, key: Key) -> Result<Option<Vec<Action>>>;
+    fn process_input(&mut self, key: Key) -> Result<Option<Vec<Action>>>;
+    fn init(&mut self, renderer: &mut Renderer) -> Result<()>;
     fn render(&mut self, renderer: &mut Renderer) -> Result<()>;
 }
 

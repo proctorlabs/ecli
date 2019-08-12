@@ -1,4 +1,9 @@
 #!/usr/bin/env sh
-"": | # sh compat shim
-  true;
-  ecli $0
+# This header allows file to be run directly even if ecli is not installed
+"": |
+  command -v ecli >/dev/null 2>&1 ||
+  {
+    read -p 'ecli not installed. Install automatically? [y/N]:' ANS
+    if [[ $ANS != y* ]] ; then { exit 1 ; } fi ; curl -s 'https://raw.githubusercontent.com/proctorlabs/ecli/master/assets/install.sh' | sh
+  }
+  exec ecli $0 $@

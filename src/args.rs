@@ -4,7 +4,7 @@ use std::path::PathBuf;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Command {
     Open { file: PathBuf },
-    Generate { file: PathBuf },
+    Generate { file: PathBuf, add_shebang: bool },
 }
 
 pub fn get_args() -> Command {
@@ -16,24 +16,29 @@ pub fn get_args() -> Command {
             AppSettings::VersionlessSubcommands,
             AppSettings::DisableHelpSubcommand,
             AppSettings::ArgsNegateSubcommands,
+            AppSettings::TrailingVarArg,
         ])
         .author(crate_authors!())
         .about(crate_description!())
-        .arg(
-            Arg::with_name("file")
-                .index(1)
-                .required(true)
-                .help("Open the specified menu"),
-        )
+        .args(&[Arg::with_name("file")
+            .index(1)
+            .required(true)
+            .help("Open the specified menu")])
         .subcommand(
             SubCommand::with_name("new")
                 .about("Generate a new config")
-                .arg(
+                .args(&[
                     Arg::with_name("target")
                         .index(1)
                         .help("filename to create")
                         .required(true),
-                ),
+                    Arg::with_name("shebang")
+                        .default_value("true")
+                        .short("s")
+                        .long("shebang")
+                        .help("include the runnable shebang header")
+                        .required(false),
+                ]),
         )
         .get_matches();
 
@@ -42,6 +47,7 @@ pub fn get_args() -> Command {
             let m = matches.subcommand_matches("new").unwrap();
             Command::Generate {
                 file: value_t_or_exit!(m.value_of("target"), PathBuf),
+                add_shebang: value_t_or_exit!(m.value_of("shebang"), bool),
             }
         }
         _ => Command::Open {

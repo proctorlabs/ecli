@@ -3,7 +3,7 @@ use super::*;
 pub fn exec(renderer: &mut Renderer, action: &Action, state: &mut State) -> Result<()> {
     match action {
         Action::Script { script, shell, .. } => {
-            renderer.halt()?;
+            renderer.set_render_mode(RenderMode::Standard)?;
             Command::new("/usr/bin/env")
                 .args(vec![shell.as_str(), "-c", script.as_str()])
                 .stdin(Stdio::inherit())
@@ -13,10 +13,9 @@ pub fn exec(renderer: &mut Renderer, action: &Action, state: &mut State) -> Resu
 
             println!("(Process exited, press any key to continue)");
             std::io::stdin().read_exact(&mut [0])?;
-            renderer.resume()?;
         }
         Action::Command { command, args, .. } => {
-            renderer.halt()?;
+            renderer.set_render_mode(RenderMode::Standard)?;
             Command::new(&command)
                 .args(args)
                 .stdin(Stdio::inherit())
@@ -26,10 +25,10 @@ pub fn exec(renderer: &mut Renderer, action: &Action, state: &mut State) -> Resu
 
             println!("(Process exited, press any key to continue)");
             std::io::stdin().read_exact(&mut [0])?;
-            renderer.resume()?;
         }
         Action::Goto { goto } => {
-            let new = get_screen(state.config.menus[goto].clone())?;
+            let mut new = get_screen(state.config.menus[goto].clone())?;
+            new.init(renderer)?;
             state.stack.push(new);
         }
         Action::Return { .. } => {

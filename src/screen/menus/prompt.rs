@@ -16,7 +16,7 @@ impl PromptScreen {
 }
 
 impl Screen for PromptScreen {
-    fn input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
+    fn process_input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
         match key {
             Key::Char('\n') => {
                 return Ok(Some(vec![
@@ -30,9 +30,14 @@ impl Screen for PromptScreen {
         Ok(None)
     }
 
-    fn render(&mut self, renderer: &mut Renderer) -> Result<()> {
-        draw!(renderer @style: default @loc: (4, 1) -> "{}", self.menu.prompt);
-        draw!(renderer @style: default @loc: (4, 2) -> "➜ {}", self.input);
+    fn init(&mut self, r: &mut Renderer) -> Result<()> {
+        r.set_render_mode(RenderMode::Standard)?;
+        draw!(r @style: default -> "{} ➜ ", self.menu.prompt);
+        Ok(())
+    }
+
+    fn render(&mut self, r: &mut Renderer) -> Result<()> {
+        r.set_render_mode(RenderMode::Standard)?;
         Ok(())
     }
 }

@@ -20,8 +20,8 @@ fn main() -> Result<()> {
             let menu = config::AppConfig::load_file(file)?;
             screen::enter(menu)?;
         }
-        Command::Generate { file } => {
-            commands::generate(file)?;
+        Command::Generate { file, add_shebang } => {
+            commands::generate(file, add_shebang)?;
         }
     }
     Ok(())
