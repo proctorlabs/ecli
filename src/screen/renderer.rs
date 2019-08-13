@@ -31,12 +31,12 @@ impl Renderer {
                     self.term.activate_raw_mode()?;
                     self.size = terminal_size()?;
                     self.clear()?;
-                    draw!(self -> "{}", termion::cursor::Hide);
+                    draw!(self; -> "{}", termion::cursor::Hide);
                     self.flush()?;
                 }
                 RenderMode::Standard => {
                     self.clear()?;
-                    draw!(self -> "{}", termion::cursor::Show);
+                    draw!(self; -> "{}", termion::cursor::Show);
                     self.flush()?;
                     self.size = terminal_size()?;
                     self.term.suspend_raw_mode()?;
@@ -78,14 +78,18 @@ impl Renderer {
     }
 
     pub fn clear(&mut self) -> Result<()> {
-        draw!(self -> "{}{}", termion::clear::All, termion::cursor::Goto(1, 1));
+        draw!(self; -> "{}{}", termion::clear::All, termion::cursor::Goto(1, 1));
         Ok(())
+    }
+
+    pub fn has_cursor(&self) -> Result<bool> {
+        Ok(self.mode == RenderMode::Standard)
     }
 
     pub fn begin(&mut self) -> Result<()> {
         match self.mode {
             RenderMode::Raw | RenderMode::Unitialized => {
-                draw!(self -> "{}{}",
+                draw!(self; -> "{}{}",
                     termion::clear::All,
                     termion::cursor::Goto(1, 1)
                 );

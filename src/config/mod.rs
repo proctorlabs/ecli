@@ -15,12 +15,10 @@ impl Default for StyleConfig {
     fn default() -> Self {
         StyleConfig {
             default: Style {
-                alignment: Alignment::Left,
                 fg: Color::Red,
                 bg: Color::None,
             },
             selected: Style {
-                alignment: Alignment::Left,
                 fg: Color::Green,
                 bg: Color::None,
             },
@@ -31,8 +29,17 @@ impl Default for StyleConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct AppConfig {
+    #[serde(default)]
+    pub options: Options,
     pub styles: StyleConfig,
     pub menus: BTreeMap<String, Menu>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[serde(rename_all = "snake_case")]
+pub struct Options {
+    #[serde(default)]
+    pub debug: bool,
 }
 
 impl Default for AppConfig {
@@ -44,11 +51,12 @@ impl Default for AppConfig {
                 title: "Default Menu".into(),
                 entries: vec![Entry {
                     text: "Exit".into(),
-                    actions: vec![Action::Return { r#return: () }],
+                    actions: vec![Action::Pop { pop: () }],
                 }],
             }),
         );
         AppConfig {
+            options: Default::default(),
             styles: Default::default(),
             menus,
         }
@@ -74,7 +82,6 @@ pub struct ChoiceMenu {
 #[serde(rename_all = "snake_case")]
 pub struct PromptMenu {
     pub prompt: String,
-    pub set: String,
     pub then: Vec<Action>,
 }
 
@@ -102,17 +109,19 @@ pub enum Action {
     Goto {
         goto: String,
     },
-    Return {
-        r#return: (),
+    Set {
+        set: String,
     },
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "snake_case")]
-pub enum Alignment {
-    Left,
-    Center,
-    Right,
+    Pop {
+        pop: (),
+    },
+    Validate {
+        validate: String,
+        #[serde(default = "default_shell")]
+        shell: String,
+        #[serde(default)]
+        on_fail: Vec<Action>,
+    },
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -127,7 +136,6 @@ pub enum Color {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Style {
-    pub alignment: Alignment,
     pub fg: Color,
     pub bg: Color,
 }

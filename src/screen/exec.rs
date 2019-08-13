@@ -1,64 +1,98 @@
 use super::*;
 
-pub fn exec(renderer: &mut Renderer, action: &Action, state: &mut State) -> Result<()> {
-    match render_action(action, &state.template, &state.vars)? {
-        Action::Script { script, shell, .. } => {
-            renderer.set_render_mode(RenderMode::Standard)?;
-            Command::new("/usr/bin/env")
-                .args(vec![shell.as_str(), "-c", script.as_str()])
-                .stdin(Stdio::inherit())
-                .stdout(Stdio::inherit())
-                .spawn()?
-                .wait()?;
+pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
+    if let Some(actions) = &result.actions {
+        let input = result
+            .input
+            .as_ref()
+            .map(|i| i.to_string())
+            .unwrap_or_default();
+        for action in actions.iter() {
+            match render_action(action, &state)? {
+                Action::Script { script, shell, .. } => {
+                    state.r.set_render_mode(RenderMode::Standard)?;
+                    let status = Command::new("/usr/bin/env")
+                        .args(vec![shell.as_str(), "-c", script.as_str()])
+                        .stdin(Stdio::inherit())
+                        .stdout(Stdio::inherit())
+                        .spawn()?
+                        .wait()?;
 
-            println!("(Process exited, press any key to continue)");
-            std::io::stdin().read_exact(&mut [0])?;
-        }
-        Action::Command { command, args, .. } => {
-            renderer.set_render_mode(RenderMode::Standard)?;
-            Command::new(&command)
-                .args(args)
-                .stdin(Stdio::inherit())
-                .stdout(Stdio::inherit())
-                .spawn()?
-                .wait()?;
+                    println!(
+                        "(Process exited with status {}, press any key to continue)",
+                        status
+                    );
+                    std::io::stdin().read_exact(&mut [0])?;
+                }
+                Action::Command { command, args, .. } => {
+                    state.r.set_render_mode(RenderMode::Standard)?;
+                    let status = Command::new(&command)
+                        .args(args)
+                        .stdin(Stdio::inherit())
+                        .stdout(Stdio::inherit())
+                        .spawn()?
+                        .wait()?;
 
-            println!("(Process exited, press any key to continue)");
-            std::io::stdin().read_exact(&mut [0])?;
+                    println!(
+                        "(Process exited with status {}, press any key to continue)",
+                        status
+                    );
+                    std::io::stdin().read_exact(&mut [0])?;
+                }
+                Action::Goto { goto } => {
+                    let new = get_screen(state.config.menus[&goto].clone())?;
+                    new.init(&mut state)?;
+                    state.push(new)?;
+                }
+                Action::Set { set } => {
+                    state.vars.insert(set, input.to_string());
+                }
+                Action::Pop { .. } => {
+                    state.pop()?;
+                }
+                Action::Validate {
+                    validate,
+                    shell,
+                    on_fail,
+                    ..
+                } => {
+                    state.r.set_render_mode(RenderMode::Standard)?;
+                    let status = Command::new("/usr/bin/env")
+                        .args(vec![shell.as_str(), "-c", validate.as_str()])
+                        .stdin(Stdio::inherit())
+                        .stdout(Stdio::inherit())
+                        .spawn()?
+                        .wait()?;
+
+                    if !status.success() {
+                        let mut result = ActionResult::default();
+                        result.actions = Some(on_fail);
+                        return exec(state, &result);
+                    }
+                }
+            };
         }
-        Action::Goto { goto } => {
-            let mut new = get_screen(state.config.menus[&goto].clone())?;
-            new.init(renderer)?;
-            state.stack.push(new);
-        }
-        Action::Return { .. } => {
-            state.stack.pop();
-        }
-    };
+    }
     Ok(())
 }
 
-fn render_action(
-    action: &Action,
-    t: &Handlebars,
-    vars: &HashMap<String, String>,
-) -> Result<Action> {
+fn render_action(action: &Action, s: &State) -> Result<Action> {
     let mut a = action.clone();
     match &mut a {
         Action::Script {
             ref mut script,
             ref mut shell,
         } => {
-            *script = t.render_template(script, vars).unwrap();
-            *shell = t.render_template(shell, vars).unwrap();
+            *script = s.template(script)?;
+            *shell = s.template(shell)?;
         }
         Action::Command {
             ref mut command,
             ref mut args,
         } => {
-            *command = t.render_template(command, vars).unwrap();
+            *command = s.template(command)?;
             for a in args.iter_mut() {
-                *a = t.render_template(a, vars).unwrap();
+                *a = s.template(a)?;
             }
         }
         _ => {}

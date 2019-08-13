@@ -1,3 +1,3 @@
-# ecli, quick CLI menus for projects
+# ecli, the Easy CLI
 
 TBD

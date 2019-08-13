@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Debug)]
 pub struct ChoiceScreen {
     pub menu: ChoiceMenu,
     pub selected: usize,
@@ -13,7 +14,8 @@ impl ChoiceScreen {
 }
 
 impl Screen for ChoiceScreen {
-    fn process_input(&mut self, key: Key) -> Result<Option<Vec<Action>>> {
+    fn process_input(&mut self, key: Key) -> Result<ActionResult> {
+        let mut result = ActionResult::default();
         match key {
             Key::Up => {
                 if self.selected > 0 {
@@ -26,38 +28,37 @@ impl Screen for ChoiceScreen {
                 }
             }
             Key::Char('\n') => {
-                return Ok(Some(self.menu.entries[self.selected].actions.clone()));
+                result.actions = Some(self.menu.entries[self.selected].actions.clone());
+                return Ok(result);
             }
             _ => {}
         };
-        Ok(None)
+        Ok(result)
     }
 
-    fn init(&mut self, r: &mut Renderer) -> Result<()> {
+    fn init(&self, state: &mut State) -> Result<()> {
+        let r = &mut state.r;
         r.set_render_mode(RenderMode::Raw)?;
         Ok(())
     }
 
-    fn render(&mut self, renderer: &mut Renderer) -> Result<()> {
-        renderer.set_render_mode(RenderMode::Raw)?;
-        renderer.border()?;
-        draw!(renderer @bold
+    fn render(&self, state: &mut State) -> Result<()> {
+        let title = state.template(&self.menu.title)?;
+        state.r.set_render_mode(RenderMode::Raw)?;
+        state.r.border()?;
+        draw!(state.r; @bold
             @style: default
-            @loc: ((renderer.size.0 / 2) - (self.menu.title.len() as u16 / 2 - 2),1)
-            -> " {} ", self.menu.title);
+            @loc: ((state.r.size.0 / 2) - (title.len() as u16 / 2 - 2),1)
+            -> " {} ", title);
 
         for (i, item) in self.menu.entries.iter().enumerate() {
             if i == self.selected {
-                draw!(renderer @bold @style: selected @loc: (4, (i as u16) + 3) -> "⮞ {}", item.text);
+                draw!(state.r; @bold @style: selected @loc: (4, (i as u16) + 3) -> "⮞ {}", item.text);
             } else {
-                draw!(renderer @style: default @loc: (6, (i as u16) + 3) -> "{}", item.text);
+                draw!(state.r; @style: default @loc: (6, (i as u16) + 3) -> "{}", item.text);
             };
         }
 
-        draw!(renderer @style: default @loc: (renderer.size.0 - 25 , 2) -> "Width: {}, Height: {}",
-            renderer.size.0,
-            renderer.size.1
-        );
         Ok(())
     }
 }

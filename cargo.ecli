@@ -9,11 +9,9 @@
   exec ecli $0 $@
 styles:
   default:
-    alignment: left
     fg: blue
     bg: none
   selected:
-    alignment: left
     fg: red
     bg: none
 menus:
@@ -26,30 +24,41 @@ menus:
       - text: Fish Shell
         actions:
           - script: fish
+      - text: Fail!
+        actions:
+          - script: "false"
       - text: Echo then exit
         actions:
           - command: echo
             args:
               - "Hello!"
-          - return: ~
+          - pop: ~
       - text: Other menu
         actions:
           - goto: other
       - text: Exit
         actions:
-          - return: ~
+          - pop: ~
   other:
-    title: Other
+    title: "Other {{somevalue}}"
     entries:
       - text: Build ecli
         actions:
           - goto: test
       - text: Go back
         actions:
-          - return: ~
+          - pop: ~
   test:
-    prompt: Hello
-    set: val
+    prompt: "Hello {{somevalue}}"
     then:
-      - return: ~
+      - set: somevalue2
+      - validate: "echo {{somevalue}} && true"
+        on_fail:
+          - script: "echo bye!"
+      - set: somevalue
+      - command: "true"
+      - pop: ~
+      - command: echo
+        args:
+          - "{{somevalue}}"
       - goto: other

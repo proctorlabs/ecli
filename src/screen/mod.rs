@@ -10,6 +10,7 @@ use {
     renderer::*,
     std::{
         collections::HashMap,
+        fmt,
         io::{stdin, stdout, Read, Stdout, Write},
         process::{Command, Stdio},
     },
@@ -24,47 +25,98 @@ use {
 pub struct State {
     pub config: AppConfig,
     pub stack: Vec<ScreenObj>,
-    pub template: Handlebars,
     pub vars: HashMap<String, String>,
+    pub t: Handlebars,
+    pub r: Renderer,
+}
+
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "( X: {} Y: {} Screen: '{:?}')",
+            self.r.size.0,
+            self.r.size.1,
+            self.stack.last()
+        )
+    }
+}
+
+impl State {
+    pub fn template(&self, s: &str) -> Result<String> {
+        Ok(self.t.render_template(s, &self.vars).unwrap_or_default())
+    }
+
+    pub fn pop(&mut self) -> Result<ScreenObj> {
+        self.stack
+            .pop()
+            .ok_or_else(|| AppError::Fatal("Stack is empty!".into()))
+    }
+
+    pub fn push(&mut self, screen: ScreenObj) -> Result<()> {
+        self.stack.push(screen);
+        Ok(())
+    }
+
+    fn init_screen(&mut self) -> Result<()> {
+        let s = self.pop()?;
+        s.init(self)?;
+        self.push(s)?;
+        Ok(())
+    }
+
+    fn render_screen(&mut self) -> Result<()> {
+        self.r.begin()?;
+        let s = self.pop()?;
+        s.render(self)?;
+        self.push(s)?;
+        if self.config.options.debug && !self.r.has_cursor()? {
+            let debug = self.to_string();
+            let debug_loc = (4, self.r.size.1 - (debug.len() as u16 / self.r.size.0) - 2);
+            draw!(self.r; @style: default @loc: (debug_loc.0, debug_loc.1) -> "{}", debug);
+        }
+        self.r.flush()?;
+        Ok(())
+    }
+
+    fn process_input(&mut self, key: Key) -> Result<()> {
+        let action;
+
+        if let Some(s) = self.stack.last_mut() {
+            action = s.process_input(key)?;
+            if action.action_needed() {
+                exec(self, &action)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn running(&self) -> Result<bool> {
+        Ok(!self.stack.is_empty())
+    }
 }
 
 pub fn enter(config: AppConfig) -> Result<()> {
-    let mut renderer = Renderer::new(&config)?;
-    let mut screen_obj = exec::get_screen(config.menus["main"].clone())?;
-    screen_obj.init(&mut renderer)?;
     let mut state = State {
-        config,
-        stack: vec![screen_obj],
-        template: Handlebars::new(),
+        stack: vec![exec::get_screen(config.menus["main"].clone())?],
+        r: Renderer::new(&config)?,
         vars: HashMap::new(),
+        t: Handlebars::new(),
+        config,
     };
+    state.init_screen()?;
 
     let mut keys = stdin().keys();
-    while !state.stack.is_empty() {
-        render_screen(&mut renderer, state.stack.last_mut().unwrap())?;
-
+    while state.running()? {
+        state.render_screen()?;
         let key = keys.next().unwrap_or(Ok(Key::Null))?;
         if Key::Ctrl('c') == key {
             break;
         }
-
-        let action = state.stack.last_mut().unwrap().process_input(key)?;
-
-        if let Some(action) = action {
-            for a in action.iter() {
-                exec(&mut renderer, a, &mut state)?;
-            }
-        }
+        state.process_input(key)?;
     }
 
-    renderer.set_render_mode(RenderMode::Standard)?;
-    Ok(())
-}
-
-#[allow(clippy::borrowed_box)]
-fn render_screen(r: &mut Renderer, s: &mut Box<dyn Screen>) -> Result<()> {
-    r.begin()?;
-    s.render(r)?;
-    r.flush()?;
+    state.r.set_render_mode(RenderMode::Standard)?;
     Ok(())
 }
