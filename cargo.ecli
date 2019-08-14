@@ -16,7 +16,7 @@ styles:
     bg: none
 menus:
   main:
-    title: Some title
+    title: "ecli {{ ecli.version | default(value='test2') }}"
     entries:
       - text: Bash Shell
         actions:
@@ -24,14 +24,21 @@ menus:
       - text: Fish Shell
         actions:
           - script: fish
-      - text: Fail!
+      - text: Set something
         actions:
-          - script: "false"
+          - script: 'echo {% set_global somevalue = "boo" %}'
+      - text: Python!
+        actions:
+          - script: |
+              import sys
+              print("Hello from python!")
+              print(sys.version)
+            shell: python
       - text: Echo then exit
         actions:
           - command: echo
             args:
-              - "Hello!"
+              - "{{ 'README.md' | contents }}"
           - pop: ~
       - text: Other menu
         actions:
@@ -40,7 +47,7 @@ menus:
         actions:
           - pop: ~
   other:
-    title: "Other {{somevalue}}"
+    title: "Other {{somevalue | default(value='None')}}"
     entries:
       - text: Build ecli
         actions:
@@ -49,10 +56,10 @@ menus:
         actions:
           - pop: ~
   test:
-    prompt: "Hello {{somevalue}}"
+    prompt: "Hello {{ somevalue | default(value='None') }}"
     then:
-      - set: somevalue2
-      - validate: "echo {{somevalue}} && true"
+      - set: somevalue
+      - validate: "echo {{ somevalue == 'test' }}"
         on_fail:
           - script: "echo bye!"
       - set: somevalue

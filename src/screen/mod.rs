@@ -5,11 +5,9 @@ mod renderer;
 use {
     crate::{config::*, *},
     exec::*,
-    handlebars::Handlebars,
     menus::*,
     renderer::*,
     std::{
-        collections::HashMap,
         fmt,
         io::{stdin, stdout, Read, Stdout, Write},
         process::{Command, Stdio},
@@ -25,8 +23,6 @@ use {
 pub struct State {
     pub config: AppConfig,
     pub stack: Vec<ScreenObj>,
-    pub vars: HashMap<String, String>,
-    pub t: Handlebars,
     pub r: Renderer,
 }
 
@@ -43,10 +39,6 @@ impl fmt::Display for State {
 }
 
 impl State {
-    pub fn template(&self, s: &str) -> Result<String> {
-        Ok(self.t.render_template(s, &self.vars).unwrap_or_default())
-    }
-
     pub fn pop(&mut self) -> Result<ScreenObj> {
         self.stack
             .pop()
@@ -101,8 +93,6 @@ pub fn enter(config: AppConfig) -> Result<()> {
     let mut state = State {
         stack: vec![exec::get_screen(config.menus["main"].clone())?],
         r: Renderer::new(&config)?,
-        vars: HashMap::new(),
-        t: Handlebars::new(),
         config,
     };
     state.init_screen()?;

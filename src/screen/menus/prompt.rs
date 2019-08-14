@@ -1,4 +1,5 @@
 use super::*;
+use crate::templates::*;
 
 #[derive(Debug)]
 pub struct PromptScreen {
@@ -34,7 +35,7 @@ impl Screen for PromptScreen {
     }
 
     fn init(&self, state: &mut State) -> Result<()> {
-        let prompt = state.template(&self.menu.prompt)?;
+        let prompt = render(&self.menu.prompt)?;
         let r = &mut state.r;
         r.set_render_mode(RenderMode::Standard)?;
         draw!(r; @style: default -> "{} ➜ ", prompt);

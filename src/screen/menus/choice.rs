@@ -43,7 +43,7 @@ impl Screen for ChoiceScreen {
     }
 
     fn render(&self, state: &mut State) -> Result<()> {
-        let title = state.template(&self.menu.title)?;
+        let title = crate::templates::render(&self.menu.title)?; //state.template(&self.menu.title)?;
         state.r.set_render_mode(RenderMode::Raw)?;
         state.r.border()?;
         draw!(state.r; @bold

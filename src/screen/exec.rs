@@ -1,4 +1,5 @@
 use super::*;
+use crate::templates::*;
 
 pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
     if let Some(actions) = &result.actions {
@@ -45,7 +46,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                     state.push(new)?;
                 }
                 Action::Set { set } => {
-                    state.vars.insert(set, input.to_string());
+                    context_set(&set, &input)?;
                 }
                 Action::Pop { .. } => {
                     state.pop()?;
@@ -58,7 +59,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
                     let status = Command::new("/usr/bin/env")
-                        .args(vec![shell.as_str(), "-c", validate.as_str()])
+                        .args(vec![shell.as_str(), "-c", &validate])
                         .stdin(Stdio::inherit())
                         .stdout(Stdio::inherit())
                         .spawn()?
@@ -76,24 +77,29 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
     Ok(())
 }
 
-fn render_action(action: &Action, s: &State) -> Result<Action> {
+fn render_action(action: &Action, _: &State) -> Result<Action> {
     let mut a = action.clone();
     match &mut a {
         Action::Script {
             ref mut script,
             ref mut shell,
         } => {
-            *script = s.template(script)?;
-            *shell = s.template(shell)?;
+            *script = render(script)?;
+            *shell = render(shell)?;
         }
         Action::Command {
             ref mut command,
             ref mut args,
         } => {
-            *command = s.template(command)?;
+            *command = render(command)?;
             for a in args.iter_mut() {
-                *a = s.template(a)?;
+                *a = render(a)?;
             }
+        }
+        Action::Validate {
+            ref mut validate, ..
+        } => {
+            *validate = render(validate)?;
         }
         _ => {}
     }

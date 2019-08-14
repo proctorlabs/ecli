@@ -1,6 +1,9 @@
 #[macro_use]
 extern crate clap;
 
+#[macro_use]
+extern crate lazy_static;
+
 mod error;
 #[macro_use]
 mod macros;
@@ -11,6 +14,7 @@ mod args;
 mod commands;
 mod config;
 mod screen;
+mod templates;
 
 pub use args::Command;
 
