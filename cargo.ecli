@@ -14,58 +14,63 @@ styles:
   selected:
     fg: red
     bg: none
+actions:
+  bash:
+    command: bash
+  fish:
+    command: fish
+  exit: exit
+  return: pop
+  python:
+    shell: python
+    script: |
+      import sys
+      print("Hello from python!")
+      print(sys.version)
+  echo_exit:
+    - command: echo
+      args:
+        - "{{ 'README.md' | contents }}"
+    - pop
+  other_menu: { goto: other }
+  test_prompt:
+    goto: test
+  do_stuff:
+    - set: somevalue
+    - validate: "echo {{ somevalue == 'test' }}"
+      on_fail: exit
+    - set: somevalue
+    - command: "true"
+    - pop
+    - command: echo
+      args:
+        - "{{ somevalue }}"
+    - goto: other
 menus:
   main:
     title: "ecli {{ ecli.version | default(value='test2') }}"
     entries:
       - text: Bash Shell
-        actions:
-          - command: bash
+        actions: bash
       - text: Fish Shell
-        actions:
-          - script: fish
-      - text: Set something
-        actions:
-          - script: 'echo {% set_global somevalue = "boo" %}'
+        actions: fish
       - text: Python!
-        actions:
-          - script: |
-              import sys
-              print("Hello from python!")
-              print(sys.version)
-            shell: python
+        actions: python
       - text: Echo then exit
-        actions:
-          - command: echo
-            args:
-              - "{{ 'README.md' | contents }}"
-          - pop: ~
+        actions: echo_exit
       - text: Other menu
-        actions:
-          - goto: other
+        actions: other_menu
       - text: Exit
-        actions:
-          - pop: ~
+        actions: exit
   other:
-    title: "Other {{somevalue | default(value='None')}}"
+    title: "Other {{ somevalue | default(value='None') }}"
     entries:
       - text: Build ecli
-        actions:
-          - goto: test
+        actions: test_prompt
       - text: Go back
-        actions:
-          - pop: ~
+        actions: return
+      - text: Exit
+        actions: exit
   test:
     prompt: "Hello {{ somevalue | default(value='None') }}"
-    then:
-      - set: somevalue
-      - validate: "echo {{ somevalue == 'test' }}"
-        on_fail:
-          - script: "echo bye!"
-      - set: somevalue
-      - command: "true"
-      - pop: ~
-      - command: echo
-        args:
-          - "{{somevalue}}"
-      - goto: other
+    then: do_stuff

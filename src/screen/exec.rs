@@ -8,8 +8,12 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
             .as_ref()
             .map(|i| i.to_string())
             .unwrap_or_default();
-        for action in actions.iter() {
-            match render_action(action, &state)? {
+        for action in state
+            .config
+            .get_actions(OneOrMany::Many(actions.clone()))?
+            .iter()
+        {
+            match render_action(action)? {
                 Action::Script { script, shell, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
                     let status = Command::new("/usr/bin/env")
@@ -48,9 +52,10 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 Action::Set { set } => {
                     context_set(&set, &input)?;
                 }
-                Action::Pop { .. } => {
+                Action::Nav(Nav::Pop) => {
                     state.pop()?;
                 }
+                Action::Nav(Nav::Exit) => while state.pop().is_ok() {},
                 Action::Validate {
                     validate,
                     shell,
@@ -67,7 +72,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
 
                     if !status.success() {
                         let mut result = ActionResult::default();
-                        result.actions = Some(on_fail);
+                        result.actions = Some(on_fail.get());
                         return exec(state, &result);
                     }
                 }
@@ -77,7 +82,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
     Ok(())
 }
 
-fn render_action(action: &Action, _: &State) -> Result<Action> {
+fn render_action(action: &Action) -> Result<Action> {
     let mut a = action.clone();
     match &mut a {
         Action::Script {

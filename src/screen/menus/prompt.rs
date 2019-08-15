@@ -23,9 +23,7 @@ impl Screen for PromptScreen {
         match key {
             Key::Char('\n') => {
                 result.input = Some(self.input.clone());
-                let mut v = vec![Action::Pop { pop: () }];
-                v.append(&mut self.menu.then.clone());
-                result.actions = Some(v);
+                result.actions = Some(self.menu.then.get());
                 return Ok(result);
             }
             Key::Char(c) => self.input = format!("{}{}", self.input, c),

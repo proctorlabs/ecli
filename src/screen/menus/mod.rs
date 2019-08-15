@@ -15,7 +15,7 @@ pub type ScreenObj = Box<dyn Screen>;
 #[derive(Default)]
 pub struct ActionResult {
     pub input: Option<String>,
-    pub actions: Option<Vec<Action>>,
+    pub actions: Option<Vec<String>>,
 }
 
 impl ActionResult {

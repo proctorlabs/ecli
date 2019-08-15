@@ -28,7 +28,7 @@ impl Screen for ChoiceScreen {
                 }
             }
             Key::Char('\n') => {
-                result.actions = Some(self.menu.entries[self.selected].actions.clone());
+                result.actions = Some(self.menu.entries[self.selected].actions.get());
                 return Ok(result);
             }
             _ => {}

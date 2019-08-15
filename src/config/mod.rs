@@ -31,7 +31,9 @@ impl Default for StyleConfig {
 pub struct AppConfig {
     #[serde(default)]
     pub options: Options,
+    #[serde(default)]
     pub styles: StyleConfig,
+    pub actions: BTreeMap<String, OneOrMany<Action>>,
     pub menus: BTreeMap<String, Menu>,
 }
 
@@ -51,13 +53,14 @@ impl Default for AppConfig {
                 title: "Default Menu".into(),
                 entries: vec![Entry {
                     text: "Exit".into(),
-                    actions: vec![Action::Pop { pop: () }],
+                    actions: OneOrMany::One("exit".into()),
                 }],
             }),
         );
         AppConfig {
             options: Default::default(),
             styles: Default::default(),
+            actions: Default::default(),
             menus,
         }
     }
@@ -73,6 +76,23 @@ pub enum Menu {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
+#[serde(untagged)]
+pub enum OneOrMany<T> {
+    One(T),
+    Many(Vec<T>),
+}
+
+impl<T: Clone> OneOrMany<T> {
+    pub fn get(&self) -> Vec<T> {
+        match self {
+            OneOrMany::One(t) => vec![t.clone()],
+            OneOrMany::Many(t) => t.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct ChoiceMenu {
     pub title: String,
     pub entries: Vec<Entry>,
@@ -82,14 +102,14 @@ pub struct ChoiceMenu {
 #[serde(rename_all = "snake_case")]
 pub struct PromptMenu {
     pub prompt: String,
-    pub then: Vec<Action>,
+    pub then: OneOrMany<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Entry {
     pub text: String,
-    pub actions: Vec<Action>,
+    pub actions: OneOrMany<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -112,16 +132,20 @@ pub enum Action {
     Set {
         set: String,
     },
-    Pop {
-        pop: (),
-    },
+    Nav(Nav),
     Validate {
         validate: String,
         #[serde(default = "default_shell")]
         shell: String,
-        #[serde(default)]
-        on_fail: Vec<Action>,
+        on_fail: OneOrMany<String>,
     },
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum Nav {
+    Pop,
+    Exit,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -155,6 +179,14 @@ impl AppConfig {
     pub fn load_file(file: PathBuf) -> Result<Self> {
         let f = std::fs::File::open(file)?;
         Ok(serde_yaml::from_reader(f)?)
+    }
+
+    pub fn get_actions(&self, actions: OneOrMany<String>) -> Result<Vec<Action>> {
+        let mut res = vec![];
+        for action in actions.get().iter() {
+            res.append(&mut self.actions[action].get());
+        }
+        Ok(res)
     }
 }
 
