@@ -43,7 +43,14 @@ impl Screen for ChoiceScreen {
     }
 
     fn render(&self, state: &mut State) -> Result<()> {
-        let title = crate::templates::render(&self.menu.title)?; //state.template(&self.menu.title)?;
+        let title = crate::templates::render(&self.menu.title)?;
+        let entries: Vec<(usize, Result<String>)> = self
+            .menu
+            .entries
+            .iter()
+            .enumerate()
+            .map(|(i, e)| (i, crate::templates::render(&e.text)))
+            .collect();
         state.r.set_render_mode(RenderMode::Raw)?;
         state.r.border()?;
         draw!(state.r; @bold
@@ -51,11 +58,11 @@ impl Screen for ChoiceScreen {
             @loc: ((state.r.size.0 / 2) - (title.len() as u16 / 2 - 2),1)
             -> " {} ", title);
 
-        for (i, item) in self.menu.entries.iter().enumerate() {
+        for (i, text) in entries.into_iter() {
             if i == self.selected {
-                draw!(state.r; @bold @style: selected @loc: (4, (i as u16) + 3) -> "⮞ {}", item.text);
+                draw!(state.r; @bold @style: selected @loc: (4, (i as u16) + 3) -> "⮞ {}", &text?);
             } else {
-                draw!(state.r; @style: default @loc: (6, (i as u16) + 3) -> "{}", item.text);
+                draw!(state.r; @style: default @loc: (6, (i as u16) + 3) -> "{}", &text?);
             };
         }
 

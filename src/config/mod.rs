@@ -1,6 +1,7 @@
 use crate::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
+use serde_yaml::Value;
 use std::{collections::BTreeMap, fmt, path::PathBuf};
 pub use termion::color::{self, Color as TermColor};
 
@@ -137,7 +138,7 @@ pub enum Action {
         goto: String,
     },
     Set {
-        set: String,
+        set: Value,
     },
 }
 

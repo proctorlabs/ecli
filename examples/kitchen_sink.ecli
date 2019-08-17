@@ -18,7 +18,7 @@ styles:
 
 menus:
   main:
-    title: "ecli {{ ecli.version | default(value='test2') }} demo"
+    title: "ecli {{ ecli.version | default(value='test2') }}"
     entries:
       - text: Bash Shell
         actions: bash
@@ -26,6 +26,8 @@ menus:
         actions: fish
       - text: Python!
         actions: python
+      - text: "Setme: {{ key.nested.val | default(value='Not Set')}} : {{ key.nested.otherval | default(value='Not Set')}}"
+        actions: set_value
       - text: Echo then exit
         actions: echo_exit
       - text: Other menu
@@ -59,9 +61,13 @@ actions:
         print(sys.version)
     - pause
 
-  # Set a value to context variables
+  # Set value(s) to context
   set_value:
-    set: somevalue
+    set:
+      key:
+        nested:
+          val: "{{ exec(command='echo', args=['demo']) | key(name='stdout') | trim }}"
+          otherval: "Hello!"
 
   # Display contents of a file and immediately exit
   echo_exit:

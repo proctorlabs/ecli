@@ -18,6 +18,8 @@ lazy_static! {
     pub static ref TERA: Mutex<Tera> = {
         let mut t = Tera::default();
         t.register_filter("contents", filters::file_contents);
+        t.register_filter("key", filters::get_key);
+        t.register_function("exec", functions::make_exec());
         t.autoescape_on(vec![]);
         Mutex::new(t)
     };
@@ -50,4 +52,39 @@ pub fn context_set<T: Serialize + ?Sized>(key: &str, val: &T) -> Result<()> {
     let mut context = CONTEXT.lock().unwrap();
     context.insert(key, val);
     Ok(())
+}
+
+pub fn context_set_yaml(yaml: &serde_yaml::Value) -> Result<()> {
+    let result = recurse_yaml(yaml)?;
+    if let serde_yaml::Value::Mapping(m) = result {
+        for kv in m.iter() {
+            if let (serde_yaml::Value::String(k), v) = kv {
+                context_set(&k, v)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn recurse_yaml(yaml: &serde_yaml::Value) -> Result<serde_yaml::Value> {
+    let mut res = yaml.clone();
+    match res {
+        serde_yaml::Value::String(ref mut s) => {
+            *s = render(s)?;
+        }
+        serde_yaml::Value::Sequence(ref mut a) => {
+            for i in a.iter_mut() {
+                *i = recurse_yaml(i)?;
+            }
+        }
+        serde_yaml::Value::Mapping(ref mut m) => {
+            let mut newmap = serde_yaml::Mapping::new();
+            for (k, v) in m.iter() {
+                newmap.insert(recurse_yaml(k)?, recurse_yaml(v)?);
+            }
+            *m = newmap;
+        }
+        _ => {}
+    };
+    Ok(res)
 }
