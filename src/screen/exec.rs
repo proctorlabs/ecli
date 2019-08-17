@@ -1,5 +1,6 @@
 use super::*;
 use crate::templates::*;
+use termion::input::TermRead;
 
 pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
     if let Some(actions) = &result.actions {
@@ -8,40 +9,15 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
             .as_ref()
             .map(|i| i.to_string())
             .unwrap_or_default();
-        for action in state
-            .config
-            .get_actions(OneOrMany::Many(actions.clone()))?
-            .iter()
-        {
+        for action in state.config.get_actions(actions)?.iter() {
             match render_action(action)? {
-                Action::Script { script, shell, .. } => {
-                    state.r.set_render_mode(RenderMode::Standard)?;
-                    let status = Command::new("/usr/bin/env")
-                        .args(vec![shell.as_str(), "-c", script.as_str()])
-                        .stdin(Stdio::inherit())
-                        .stdout(Stdio::inherit())
-                        .spawn()?
-                        .wait()?;
-
-                    println!(
-                        "(Process exited with status {}, press any key to continue)",
-                        status
-                    );
-                    std::io::stdin().read_exact(&mut [0])?;
+                Action::Nav(Nav::Pop) => {
+                    state.pop()?;
                 }
-                Action::Command { command, args, .. } => {
+                Action::Nav(Nav::Exit) => while state.pop().is_ok() {},
+                Action::Nav(Nav::Pause) => {
                     state.r.set_render_mode(RenderMode::Standard)?;
-                    let status = Command::new(&command)
-                        .args(args)
-                        .stdin(Stdio::inherit())
-                        .stdout(Stdio::inherit())
-                        .spawn()?
-                        .wait()?;
-
-                    println!(
-                        "(Process exited with status {}, press any key to continue)",
-                        status
-                    );
+                    println!("(Press any key to continue)");
                     std::io::stdin().read_exact(&mut [0])?;
                 }
                 Action::Goto { goto } => {
@@ -52,28 +28,64 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 Action::Set { set } => {
                     context_set(&set, &input)?;
                 }
-                Action::Nav(Nav::Pop) => {
-                    state.pop()?;
-                }
-                Action::Nav(Nav::Exit) => while state.pop().is_ok() {},
-                Action::Validate {
-                    validate,
-                    shell,
-                    on_fail,
-                    ..
-                } => {
+                Action::Script { script, shell, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
-                    let status = Command::new("/usr/bin/env")
-                        .args(vec![shell.as_str(), "-c", &validate])
+                    Command::new("/usr/bin/env")
+                        .args(vec![shell.as_str(), "-c", script.as_str()])
                         .stdin(Stdio::inherit())
                         .stdout(Stdio::inherit())
                         .spawn()?
                         .wait()?;
-
-                    if !status.success() {
-                        let mut result = ActionResult::default();
-                        result.actions = Some(on_fail.get());
-                        return exec(state, &result);
+                }
+                Action::Command { command, args, .. } => {
+                    state.r.set_render_mode(RenderMode::Standard)?;
+                    Command::new(&command)
+                        .args(args)
+                        .stdin(Stdio::inherit())
+                        .stdout(Stdio::inherit())
+                        .spawn()?
+                        .wait()?;
+                }
+                Action::Prompt {
+                    prompt,
+                    val,
+                    password,
+                } => {
+                    state.r.set_render_mode(RenderMode::Standard)?;
+                    draw!(state.r; @style: default -> "{} ➜ ", prompt);
+                    state.r.flush()?;
+                    let res = if password {
+                        let res = std::io::stdin().read_passwd(&mut vec![])?;
+                        draw!(state.r; -> "{}", '\n');
+                        res.unwrap_or_default().trim().to_string()
+                    } else {
+                        let mut buf: String = String::new();
+                        std::io::stdin().read_line(&mut buf)?;
+                        buf.trim().to_string()
+                    };
+                    crate::templates::context_set(&val, &res)?;
+                }
+                Action::Print { print } => {
+                    state.r.set_render_mode(RenderMode::Standard)?;
+                    draw!(state.r; @style: default -> "{}\n", print);
+                }
+                Action::Check { check, pass, fail } => {
+                    return if check.parse() == Ok(true) {
+                        exec(
+                            state,
+                            &ActionResult {
+                                input: Some(input),
+                                actions: Some(pass.get()),
+                            },
+                        )
+                    } else {
+                        exec(
+                            state,
+                            &ActionResult {
+                                input: Some(input),
+                                actions: Some(fail.get()),
+                            },
+                        )
                     }
                 }
             };
@@ -101,10 +113,15 @@ fn render_action(action: &Action) -> Result<Action> {
                 *a = render(a)?;
             }
         }
-        Action::Validate {
-            ref mut validate, ..
-        } => {
-            *validate = render(validate)?;
+        Action::Check { ref mut check, .. } => {
+            let tmp = format!("{{{{ {check} }}}}", check = check);
+            *check = render(&tmp).unwrap_or_default();
+        }
+        Action::Prompt { ref mut prompt, .. } => {
+            *prompt = render(prompt)?;
+        }
+        Action::Print { ref mut print } => {
+            *print = render(print)?;
         }
         _ => {}
     }
@@ -114,6 +131,5 @@ fn render_action(action: &Action) -> Result<Action> {
 pub fn get_screen(menu: Menu) -> Result<ScreenObj> {
     match menu {
         Menu::Choice(m) => ChoiceScreen::new(m),
-        Menu::Prompt(m) => PromptScreen::new(m),
     }
 }

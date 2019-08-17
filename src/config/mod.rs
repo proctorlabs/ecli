@@ -71,7 +71,6 @@ impl Default for AppConfig {
 #[serde(untagged)]
 pub enum Menu {
     Choice(ChoiceMenu),
-    Prompt(PromptMenu),
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -100,13 +99,6 @@ pub struct ChoiceMenu {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct PromptMenu {
-    pub prompt: String,
-    pub then: OneOrMany<String>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "snake_case")]
 pub struct Entry {
     pub text: String,
     pub actions: OneOrMany<String>,
@@ -116,6 +108,7 @@ pub struct Entry {
 #[serde(rename_all = "snake_case")]
 #[serde(untagged)]
 pub enum Action {
+    Nav(Nav), // These are navigation types without options, we box them here so they can be used without a hashmap
     Script {
         script: String,
         #[serde(default = "default_shell")]
@@ -126,18 +119,25 @@ pub enum Action {
         #[serde(default)]
         args: Vec<String>,
     },
+    Check {
+        check: String,
+        pass: OneOrMany<String>,
+        fail: OneOrMany<String>,
+    },
+    Prompt {
+        prompt: String,
+        val: String,
+        #[serde(default)]
+        password: bool,
+    },
+    Print {
+        print: String,
+    },
     Goto {
         goto: String,
     },
     Set {
         set: String,
-    },
-    Nav(Nav),
-    Validate {
-        validate: String,
-        #[serde(default = "default_shell")]
-        shell: String,
-        on_fail: OneOrMany<String>,
     },
 }
 
@@ -146,15 +146,45 @@ pub enum Action {
 pub enum Nav {
     Pop,
     Exit,
+    Pause,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-#[serde(rename_all = "snake_case")]
-pub enum Color {
-    None,
-    Red,
-    Green,
-    Blue,
+macro_rules! impl_colors {
+    ($($name:ident : $tname:ident),*) => {
+        #[derive(Debug, Deserialize, Serialize, Clone)]
+        #[serde(rename_all = "snake_case")]
+        pub enum Color {
+            $($name),*
+        }
+
+        impl fmt::Display for Color {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                match self {
+                    $(Color::$name => color::$tname.write_fg(f)),*
+                }
+            }
+        }
+    };
+}
+
+impl_colors! {
+    None:Reset,
+    Black:Black,
+    Red:Red,
+    Green:Green,
+    Yellow:Yellow,
+    Blue:Blue,
+    Magenta:Magenta,
+    Cyan:Cyan,
+    White:White,
+    LightBlack:LightBlack,
+    LightRed:LightRed,
+    LightGreen:LightGreen,
+    LightYellow:LightYellow,
+    LightBlue:LightBlue,
+    LightMagenta:LightMagenta,
+    LightCyan:LightCyan,
+    LightWhite:LightWhite
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -164,26 +194,15 @@ pub struct Style {
     pub bg: Color,
 }
 
-impl fmt::Display for Color {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Color::None => color::Reset.write_fg(f),
-            Color::Red => color::Red.write_fg(f),
-            Color::Green => color::Green.write_fg(f),
-            Color::Blue => color::Blue.write_fg(f),
-        }
-    }
-}
-
 impl AppConfig {
     pub fn load_file(file: PathBuf) -> Result<Self> {
         let f = std::fs::File::open(file)?;
         Ok(serde_yaml::from_reader(f)?)
     }
 
-    pub fn get_actions(&self, actions: OneOrMany<String>) -> Result<Vec<Action>> {
+    pub fn get_actions(&self, actions: &[String]) -> Result<Vec<Action>> {
         let mut res = vec![];
-        for action in actions.get().iter() {
+        for action in actions.iter() {
             res.append(&mut self.actions[action].get());
         }
         Ok(res)
@@ -191,5 +210,5 @@ impl AppConfig {
 }
 
 fn default_shell() -> String {
-    "bash".into()
+    "sh".into()
 }

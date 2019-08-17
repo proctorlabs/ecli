@@ -5,6 +5,7 @@ pub enum RenderMode {
     Unitialized,
     Raw,
     Standard,
+    Paused,
 }
 
 pub struct Renderer {
@@ -35,11 +36,17 @@ impl Renderer {
                     self.flush()?;
                 }
                 RenderMode::Standard => {
-                    self.clear()?;
+                    if self.mode != RenderMode::Paused {
+                        self.clear()?;
+                    }
                     draw!(self; -> "{}", termion::cursor::Show);
                     self.flush()?;
                     self.size = terminal_size()?;
                     self.term.suspend_raw_mode()?;
+                }
+                RenderMode::Paused => {
+                    self.term.activate_raw_mode()?;
+                    self.flush()?;
                 }
                 _ => {
                     return Err(AppError::Info(format!(

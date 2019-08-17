@@ -1,8 +1,7 @@
 mod choice;
-mod prompt;
 
 use super::*;
-pub use {choice::*, prompt::*};
+pub use choice::*;
 
 pub trait Screen: std::fmt::Debug {
     fn process_input(&mut self, key: Key) -> Result<ActionResult>;

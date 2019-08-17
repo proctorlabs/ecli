@@ -1,0 +1,96 @@
+#!/usr/bin/env sh
+# This header allows file to be run directly even if ecli is not installed
+"": |
+  command -v ecli >/dev/null 2>&1 ||
+  {
+    read -p 'ecli not installed. Install automatically? [y/N]:' ANS
+    if [[ $ANS != y* ]] ; then { exit 1 ; } fi ; curl -s 'https://raw.githubusercontent.com/proctorlabs/ecli/master/assets/install.sh' | sh
+  }
+  exec ecli $0 $@
+
+styles:
+  default:
+    fg: blue
+    bg: none
+  selected:
+    fg: red
+    bg: none
+
+menus:
+  main:
+    title: "ecli {{ ecli.version | default(value='test2') }} demo"
+    entries:
+      - text: Bash Shell
+        actions: bash
+      - text: Fish Shell
+        actions: fish
+      - text: Python!
+        actions: python
+      - text: Echo then exit
+        actions: echo_exit
+      - text: Other menu
+        actions: other_menu
+      - text: Exit
+        actions: exit
+
+  other:
+    title: "Hello {{ env.USER | default(value='nobody') }} it's time for pickle testing! {{ somevalue | default(value='None') }}"
+    entries:
+      - text: Test Pickles
+        actions: test_pickles
+      - text: Go back
+        actions: return
+      - text: Exit
+        actions: exit
+
+actions:
+  # No need to pause here as these are interactive shells
+  bash:
+    command: bash
+  fish:
+    command: fish
+
+  # Run a scipt in python, pause so result can be seen
+  python:
+    - shell: python
+      script: |
+        import sys
+        print("Hello from python!")
+        print(sys.version)
+    - pause
+
+  # Set a value to context variables
+  set_value:
+    set: somevalue
+
+  # Display contents of a file and immediately exit
+  echo_exit:
+    - print: "{{ 'README.md' | contents }}"
+    - exit
+
+  # Prompt with tests and conditional action
+  test_pickles:
+    - prompt: The password is 'pickles'!
+      val: somevalue
+      password: true
+    - prompt: I don't care, go away
+      val: thing
+    - check: "somevalue == 'pickles'"
+      pass: pickle_pass
+      fail: pickle_fail
+  pickle_pass:
+    - print: "It does match!"
+    - pause
+  pickle_fail:
+    - print: "Get out of here!"
+    - pause
+
+  # Navigation between menus
+  other_menu:
+    goto: other
+
+  # Basic navigation
+  exit:
+    - print: "So long and thanks for all the fish!"
+    - exit
+  return: pop
