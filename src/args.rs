@@ -7,7 +7,7 @@ pub enum Command {
     Generate { file: PathBuf, add_shebang: bool },
 }
 
-pub fn get_args() -> Command {
+pub fn parse() -> Command {
     let matches = App::new(crate_name!())
         .version(crate_version!())
         .settings(&[

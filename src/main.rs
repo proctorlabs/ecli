@@ -19,7 +19,7 @@ mod templates;
 pub use args::Command;
 
 fn main() -> Result<()> {
-    match args::get_args() {
+    match args::parse() {
         Command::Open { file } => {
             let menu = config::AppConfig::load_file(file)?;
             screen::enter(menu)?;
