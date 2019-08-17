@@ -7,10 +7,12 @@ RUST_TRIPLE="x86_64-unknown-linux-musl"
 PACKAGE_DIR="target/${RUST_TRIPLE}/release/"
 PACKAGE_FILE="${ROOT_DIR}/${PACKAGE_DIR}ecli.tar.xz"
 HUB_VERSION="2.12.3"
+DOCKER_IMAGE="1.37-buster"
 
 build() {
     (
         cd $ROOT_DIR
+        apt-get update && apt-get install -yy musl-dev musl-tools
         rustup target add $RUST_TRIPLE
         cargo build --release --target $RUST_TRIPLE
     )
@@ -34,8 +36,8 @@ create_archive() {
 build_in_docker() {
     (
         cd $ROOT_DIR
-        docker pull rust:1.36-buster
-        docker run -v $PWD:/app -w /app --rm -it -u $UID:$UID -e "RELEASE_TAG=$RELEASE_TAG" -e "GITHUB_TOKEN=$GITHUB_TOKEN" rust:1.36-buster /app/.ci/build.sh -ba
+        docker pull rust:${DOCKER_IMAGE}
+        docker run -v $PWD:/app -w /app --rm -it -u $UID:$UID -e "RELEASE_TAG=$RELEASE_TAG" -e "GITHUB_TOKEN=$GITHUB_TOKEN" rust:${DOCKER_IMAGE} /app/.ci/build.sh -ba
     )
 }
 
