@@ -1,3 +1,7 @@
+#Rust output
 /target
 **/*.rs.bk
-/hub
+
+#Cache and other build crud
+.bash_history
+.cache
