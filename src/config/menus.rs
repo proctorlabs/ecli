@@ -10,13 +10,13 @@ pub enum Menu {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct ChoiceMenu {
-    pub title: String,
+    pub title: EcliTemplate,
     pub entries: Vec<Entry>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct Entry {
-    pub text: String,
+    pub text: EcliTemplate,
     pub actions: OneOrMany<String>,
 }

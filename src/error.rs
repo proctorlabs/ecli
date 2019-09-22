@@ -17,3 +17,9 @@ impl From<serde_yaml::Error> for AppError {
         AppError::Fatal(format!("Failure parsing configuration file: {}", e))
     }
 }
+
+impl From<templar::TemplarError> for AppError {
+    fn from(e: templar::TemplarError) -> Self {
+        AppError::Fatal(format!("{}", e))
+    }
+}

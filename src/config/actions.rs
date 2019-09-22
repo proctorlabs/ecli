@@ -6,28 +6,28 @@ use super::*;
 pub enum Action {
     Nav(Nav), // These are navigation types without options, we box them here so they can be used without a hashmap
     Script {
-        script: String,
+        script: EcliTemplate,
         #[serde(default = "default_shell")]
-        shell: String,
+        shell: EcliTemplate,
     },
     Command {
-        command: String,
+        command: EcliTemplate,
         #[serde(default)]
-        args: Vec<String>,
+        args: Vec<EcliTemplate>,
     },
     Check {
-        check: String,
+        check: EcliExpression,
         pass: OneOrMany<String>,
         fail: OneOrMany<String>,
     },
     Prompt {
-        prompt: String,
+        prompt: EcliTemplate,
         val: String,
         #[serde(default)]
         password: bool,
     },
     Print {
-        print: String,
+        print: EcliTemplate,
     },
     Goto {
         goto: String,
@@ -45,6 +45,6 @@ pub enum Nav {
     Pause,
 }
 
-fn default_shell() -> String {
+fn default_shell() -> EcliTemplate {
     "sh".into()
 }

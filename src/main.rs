@@ -17,6 +17,8 @@ mod screen;
 mod templates;
 
 pub use args::Command;
+pub use templar::Document;
+pub use templates::{EcliExpression, EcliTemplate};
 
 fn main() -> Result<()> {
     match args::parse() {

@@ -31,7 +31,11 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 Action::Script { script, shell, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
                     Command::new("/usr/bin/env")
-                        .args(vec![shell.as_str(), "-c", script.as_str()])
+                        .args(vec![
+                            shell.render()?.as_str(),
+                            "-c",
+                            script.render()?.as_str(),
+                        ])
                         .stdin(Stdio::inherit())
                         .stdout(Stdio::inherit())
                         .spawn()?
@@ -39,8 +43,13 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 }
                 Action::Command { command, args, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
-                    Command::new(&command)
-                        .args(args)
+                    let cmd = command.render()?;
+                    let args: Vec<String> = args
+                        .iter()
+                        .map(|ar| ar.render())
+                        .collect::<Result<Vec<String>>>()?;
+                    Command::new(cmd)
+                        .args(&args)
                         .stdin(Stdio::inherit())
                         .stdout(Stdio::inherit())
                         .spawn()?
@@ -52,7 +61,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                     password,
                 } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
-                    draw!(state.r; @style: default -> "{} ➜ ", prompt);
+                    draw!(state.r; @style: default -> "{} ➜ ", prompt.render()?);
                     state.r.flush()?;
                     let res = if password {
                         let res = std::io::stdin().read_passwd(&mut vec![])?;
@@ -63,14 +72,14 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                         std::io::stdin().read_line(&mut buf)?;
                         buf.trim().to_string()
                     };
-                    crate::templates::context_set(&val, &res)?;
+                    context_set(val.clone().into(), &res)?;
                 }
                 Action::Print { print } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
                     draw!(state.r; @style: default -> "{}\n", print);
                 }
                 Action::Check { check, pass, fail } => {
-                    return if check.parse() == Ok(true) {
+                    return if check.exec()? == true {
                         exec(
                             state,
                             &ActionResult {
@@ -95,37 +104,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
 }
 
 fn render_action(action: &Action) -> Result<Action> {
-    let mut a = action.clone();
-    match &mut a {
-        Action::Script {
-            ref mut script,
-            ref mut shell,
-        } => {
-            *script = render(script)?;
-            *shell = render(shell)?;
-        }
-        Action::Command {
-            ref mut command,
-            ref mut args,
-        } => {
-            *command = render(command)?;
-            for a in args.iter_mut() {
-                *a = render(a)?;
-            }
-        }
-        Action::Check { ref mut check, .. } => {
-            let tmp = format!("{{{{ {check} }}}}", check = check);
-            *check = render(&tmp).unwrap_or_default();
-        }
-        Action::Prompt { ref mut prompt, .. } => {
-            *prompt = render(prompt)?;
-        }
-        Action::Print { ref mut print } => {
-            *print = render(print)?;
-        }
-        _ => {}
-    }
-    Ok(a)
+    Ok(action.clone())
 }
 
 pub fn get_screen(menu: Menu) -> Result<ScreenObj> {

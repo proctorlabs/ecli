@@ -43,13 +43,13 @@ impl Screen for ChoiceScreen {
     }
 
     fn render(&self, state: &mut State) -> Result<()> {
-        let title = crate::templates::render(&self.menu.title)?;
+        let title = self.menu.title.render()?;
         let entries: Vec<(usize, Result<String>)> = self
             .menu
             .entries
             .iter()
             .enumerate()
-            .map(|(i, e)| (i, crate::templates::render(&e.text)))
+            .map(|(i, e)| (i, e.text.render()))
             .collect();
         state.r.set_render_mode(RenderMode::Raw)?;
         state.r.border()?;
