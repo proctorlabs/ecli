@@ -24,6 +24,7 @@ fn main() -> Result<()> {
     match args::parse() {
         Command::Open { file } => {
             let menu = config::AppConfig::load_file(file)?;
+            templates::context_set_value(&menu.vars)?;
             screen::enter(menu)?;
         }
         Command::Generate { file, add_shebang } => {

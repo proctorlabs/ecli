@@ -1,59 +1,19 @@
 use crate::*;
+pub use ser::{EcliExpression, EcliTemplate};
 use serde::Serialize;
-use std::fmt;
-use templar::{Context, SharedContext, Templar, Template, TemplateTree};
+use templar::{Context, SharedContext, Templar, TemplateTree};
 
 mod ser;
 
 lazy_static! {
     pub static ref TEMPLAR: Templar = { Templar::default() };
-    pub static ref CONTEXT: SharedContext = { SharedContext::default() };
-}
-
-#[derive(Debug, Clone)]
-pub struct EcliExpression(Template, String);
-
-impl fmt::Display for EcliExpression {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.1)
-    }
-}
-
-impl EcliExpression {
-    pub fn exec(&self) -> Result<Document> {
-        self.0
-            .exec(&*CONTEXT)
-            .map_err(|e| AppError::Info(e.to_string()))
-    }
-
-    pub fn render(&self) -> Result<String> {
-        self.0
-            .render(&*CONTEXT)
-            .map_err(|e| AppError::Info(e.to_string()))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct EcliTemplate(Template, String);
-
-impl fmt::Display for EcliTemplate {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.1)
-    }
-}
-
-impl EcliTemplate {
-    pub fn exec(&self) -> Result<Document> {
-        self.0
-            .exec(&*CONTEXT)
-            .map_err(|e| AppError::Info(e.to_string()))
-    }
-
-    pub fn render(&self) -> Result<String> {
-        self.0
-            .render(&*CONTEXT)
-            .map_err(|e| AppError::Info(e.to_string()))
-    }
+    pub static ref CONTEXT: SharedContext = {
+        let context = SharedContext::default();
+        let mut init = Document::default();
+        init["ecli"]["version"] = crate_version!().into();
+        context.set(init).unwrap_or_default();
+        context
+    };
 }
 
 pub fn context_set<T: Serialize + ?Sized>(key: templar::Document, val: &T) -> Result<()> {
@@ -62,7 +22,7 @@ pub fn context_set<T: Serialize + ?Sized>(key: templar::Document, val: &T) -> Re
     Ok(())
 }
 
-pub fn context_set_yaml(doc: &templar::Document) -> Result<()> {
+pub fn context_set_value(doc: &templar::Document) -> Result<()> {
     let t: TemplateTree = TEMPLAR.parse(doc)?;
     CONTEXT.set(t)?;
     Ok(())

@@ -12,6 +12,7 @@ use serde_yaml;
 use std::{collections::BTreeMap, fmt, path::PathBuf};
 pub use styles::*;
 pub use termion::color::{self, Color as TermColor};
+use unstructured::Document;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename_all = "snake_case")]
@@ -27,6 +28,8 @@ pub struct AppConfig {
     pub options: Options,
     #[serde(default)]
     pub styles: StyleConfig,
+    #[serde(default)]
+    pub vars: Document,
     pub actions: BTreeMap<String, OneOrMany<Action>>,
     pub menus: BTreeMap<String, Menu>,
 }
@@ -48,6 +51,7 @@ impl Default for AppConfig {
             options: Default::default(),
             styles: Default::default(),
             actions: Default::default(),
+            vars: Default::default(),
             menus,
         }
     }

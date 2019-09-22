@@ -26,7 +26,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                     state.push(new)?;
                 }
                 Action::Set { set } => {
-                    context_set_yaml(&set)?;
+                    context_set_value(&set)?;
                 }
                 Action::Script { script, shell, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
