@@ -33,7 +33,7 @@ pub enum Action {
         goto: String,
     },
     Set {
-        set: Value,
+        set: templar::Document,
     },
 }
 

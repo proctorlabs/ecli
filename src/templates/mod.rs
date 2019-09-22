@@ -62,10 +62,8 @@ pub fn context_set<T: Serialize + ?Sized>(key: templar::Document, val: &T) -> Re
     Ok(())
 }
 
-pub fn context_set_yaml(yaml: &serde_yaml::Value) -> Result<()> {
-    let doc: templar::Document =
-        templar::Document::new(yaml).map_err(|e| AppError::Fatal(format!("{}", e)))?;
-    let t: TemplateTree = TEMPLAR.parse(&doc)?;
+pub fn context_set_yaml(doc: &templar::Document) -> Result<()> {
+    let t: TemplateTree = TEMPLAR.parse(doc)?;
     CONTEXT.set(t)?;
     Ok(())
 }

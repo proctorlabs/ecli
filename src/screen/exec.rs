@@ -10,7 +10,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
             .map(|i| i.to_string())
             .unwrap_or_default();
         for action in state.config.get_actions(actions)?.iter() {
-            match render_action(action)? {
+            match action {
                 Action::Nav(Nav::Pop) => {
                     state.pop()?;
                 }
@@ -21,7 +21,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                     std::io::stdin().read_exact(&mut [0])?;
                 }
                 Action::Goto { goto } => {
-                    let new = get_screen(state.config.menus[&goto].clone())?;
+                    let new = get_screen(state.config.menus[goto].clone())?;
                     new.init(&mut state)?;
                     state.push(new)?;
                 }
@@ -63,7 +63,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                     state.r.set_render_mode(RenderMode::Standard)?;
                     draw!(state.r; @style: default -> "{} ➜ ", prompt.render()?);
                     state.r.flush()?;
-                    let res = if password {
+                    let res = if *password {
                         let res = std::io::stdin().read_passwd(&mut vec![])?;
                         draw!(state.r; -> "{}", '\n');
                         res.unwrap_or_default().trim().to_string()
@@ -101,10 +101,6 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
         }
     }
     Ok(())
-}
-
-fn render_action(action: &Action) -> Result<Action> {
-    Ok(action.clone())
 }
 
 pub fn get_screen(menu: Menu) -> Result<ScreenObj> {
