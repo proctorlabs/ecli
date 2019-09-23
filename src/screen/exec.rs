@@ -76,7 +76,7 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 }
                 Action::Print { print } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
-                    draw!(state.r; @style: default -> "{}\n", print);
+                    draw!(state.r; @style: default -> "{}\n", print.render()?);
                 }
                 Action::Check { check, pass, fail } => {
                     return if check.exec()? == true {
