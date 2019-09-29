@@ -12,7 +12,7 @@ PACKAGE_DIR = "target/packages/"
 [env.libc]
 BUILD_TAR = true
 BUILD_DEB = true
-PUBLISH_CRATE = false
+PUBLISH_CRATE = true
 RUST_TARGET = "x86_64-unknown-linux-gnu"
 PACKAGE_SUFFIX = "amd64-libc"
 PACKAGE_BASENAME = "${BIN_NAME}-${BIN_VERSION}-${PACKAGE_SUFFIX}"
@@ -123,7 +123,7 @@ dependencies = ["validate"]
 condition = { env_true = ["PUBLISH_CRATE"] }
 description = "Publish crate"
 command = "cargo"
-args = ["publish", "--all-features"]
+args = ["publish", "--all-features", "--token", "${CRATE_KEY}"]
 dependencies = ["validate-release"]
 
 [tasks.mark-release]
