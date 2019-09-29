@@ -9,6 +9,17 @@ keywords = ["cli", "menu"]
 categories = ["command-line-interface", "command-line-utilities", "development-tools"]
 license = "MIT"
 readme = "README.md"
+exclude = [".github/**"]
+
+[package.metadata.deb]
+maintainer = "Phil Proctor <philliptproctor@gmail.com>"
+copyright = "2019, ecli development team"
+license-file = ["LICENSE", "5"]
+extended-description = """\
+Dynamic interactive CLI menus"""
+depends = "$auto"
+section = "utility"
+priority = "optional"
 
 [dependencies]
 termion = "1.5"
@@ -19,7 +30,15 @@ unstructured = "0.3"
 templar = "0.1"
 lazy_static = "1.4"
 
+[dev-dependencies]
+criterion = "0.3"
+
+[[bin]]
+name = "ecli"
+path = "src/main.rs"
+
 [profile.release]
-opt-level = 'z'
+opt-level = 3
 lto = true
 codegen-units = 1
+
