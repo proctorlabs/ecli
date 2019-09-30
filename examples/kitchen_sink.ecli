@@ -8,6 +8,10 @@
   }
   exec ecli $0 $@
 
+options:
+  debug: false
+  cancel_action: exit
+
 styles:
   default:
     fg: blue

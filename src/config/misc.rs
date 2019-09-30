@@ -16,3 +16,12 @@ impl<T: Clone> OneOrMany<T> {
         }
     }
 }
+
+impl<T> Default for OneOrMany<T>
+where
+    T: Default,
+{
+    fn default() -> Self {
+        OneOrMany::One(T::default())
+    }
+}

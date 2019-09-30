@@ -19,6 +19,8 @@ use unstructured::Document;
 pub struct Options {
     #[serde(default)]
     pub debug: bool,
+    #[serde(default)]
+    pub cancel_action: Option<OneOrMany<String>>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

@@ -74,6 +74,16 @@ impl State {
     fn process_input(&mut self, key: Key) -> Result<()> {
         let action;
 
+        if Key::Ctrl('c') == key {
+            let mut result = ActionResult::default();
+            if let Some(cancel) = &self.config.options.cancel_action {
+                result.actions = Some(cancel.get());
+            } else {
+                result.actions = Some(vec!["exit".to_string()]);
+            }
+            exec(self, &result)?;
+        }
+
         if let Some(s) = self.stack.last_mut() {
             action = s.process_input(key)?;
             if action.action_needed() {
@@ -101,9 +111,6 @@ pub fn enter(config: AppConfig) -> Result<()> {
     while state.running()? {
         state.render_screen()?;
         let key = keys.next().unwrap_or(Ok(Key::Null))?;
-        if Key::Ctrl('c') == key {
-            break;
-        }
         state.process_input(key)?;
     }
 

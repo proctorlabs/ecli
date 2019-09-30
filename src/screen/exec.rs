@@ -30,7 +30,8 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                 }
                 Action::Script { script, shell, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
-                    Command::new("/usr/bin/env")
+                    let mut result = unstructured::Document::default();
+                    result["ecli"]["last_result"] = Command::new("/usr/bin/env")
                         .args(vec![
                             shell.render()?.as_str(),
                             "-c",
@@ -39,7 +40,11 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                         .stdin(Stdio::inherit())
                         .stdout(Stdio::inherit())
                         .spawn()?
-                        .wait()?;
+                        .wait()?
+                        .code()
+                        .unwrap_or(2)
+                        .into();
+                    context_set_value(&result)?;
                 }
                 Action::Command { command, args, .. } => {
                     state.r.set_render_mode(RenderMode::Standard)?;
@@ -48,12 +53,17 @@ pub fn exec(mut state: &mut State, result: &ActionResult) -> Result<()> {
                         .iter()
                         .map(|ar| ar.render())
                         .collect::<Result<Vec<String>>>()?;
-                    Command::new(cmd)
+                    let mut result = unstructured::Document::default();
+                    result["ecli"]["last_result"] = Command::new(cmd)
                         .args(&args)
                         .stdin(Stdio::inherit())
                         .stdout(Stdio::inherit())
                         .spawn()?
-                        .wait()?;
+                        .wait()?
+                        .code()
+                        .unwrap_or(2)
+                        .into();
+                    context_set_value(&result)?;
                 }
                 Action::Prompt {
                     prompt,
